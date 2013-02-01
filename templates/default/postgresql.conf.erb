@@ -94,6 +94,12 @@
 #ssl_ciphers = 'ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH'	# allowed SSL ciphers
 					# (change requires restart)
 #ssl_renegotiation_limit = 512MB	# amount of data between renegotiations
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+#ssl_cert_file = 'server.crt'		# (change requires restart)
+#ssl_key_file = 'server.key'		# (change requires restart)
+#ssl_ca_file = ''			# (change requires restart)
+#ssl_crl_file = ''			# (change requires restart)
+<% end -%>
 #password_encryption = on
 #db_user_namespace = off
 
@@ -152,6 +158,12 @@
 					# (change requires restart)
 #max_fsm_relations = 1000		# min 100, ~70 bytes each
 					# (change requires restart)
+<% end -%>
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+# - Disk -
+
+#temp_file_limit = -1			# limits per-session temp file space
+					# in kB, or -1 for no limit
 
 <% end -%>
 # - Kernel Resource Usage -
@@ -192,8 +204,11 @@
 #fsync = on				# turns forced synchronization on or off
 <% if node['postgresql']['version'].to_f < 9.1 -%>
 #synchronous_commit = on		# immediate fsync at commit
-<% elsif node['postgresql']['version'].to_f >= 9.1 -%>
+<% elsif node['postgresql']['version'].to_f == 9.1 -%>
 #synchronous_commit = on		# synchronization level; on, off, or local
+<% elsif node['postgresql']['version'].to_f >= 9.2 -%>
+#synchronous_commit = on		# synchronization level;
+					# off, local, remote_write, or on
 <% end -%>
 #wal_sync_method = fsync		# the default is the first option
 					# supported by the operating system:
@@ -241,9 +256,16 @@
 # REPLICATION
 #------------------------------------------------------------------------------
 
+<% end -%>
+<% if node['postgresql']['version'].to_f == 9.1 -%>
 # - Master Server -
 
 # These settings are ignored on a standby server
+
+<% elsif node['postgresql']['version'].to_f >= 9.2 -%>
+# - Sending Server(s) -
+
+# Set these on the master and on any standby that will send replication data.
 
 <% end -%>
 <% if node['postgresql']['version'].to_f >= 9.0 -%>
@@ -252,7 +274,7 @@
 <% end -%>
 <% if node['postgresql']['version'].to_f == 9.0 -%>
 #wal_sender_delay = 200ms	# walsender cycle time, 1-10000 milliseconds
-<% elsif node['postgresql']['version'].to_f >= 9.1 -%>
+<% elsif node['postgresql']['version'].to_f == 9.1 -%>
 #wal_sender_delay = 1s		# walsender cycle time, 1-10000 milliseconds
 <% end -%>
 <% if node['postgresql']['version'].to_f >= 9.0 -%>
@@ -260,6 +282,15 @@
 <% end -%>
 <% if node['postgresql']['version'].to_f >= 9.1 -%>
 #replication_timeout = 60s	# in milliseconds; 0 disables
+<% end -%>
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+
+# - Master Server -
+
+# These settings are ignored on a standby server.
+
+<% end -%>
+<% if node['postgresql']['version'].to_f >= 9.1 -%>
 #synchronous_standby_names = ''	# standby servers that provide sync rep
 				# comma-separated list of application_name
 				# from standby(s); '*' = all
@@ -302,6 +333,9 @@
 #enable_hashagg = on
 #enable_hashjoin = on
 #enable_indexscan = on
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+#enable_indexonlyscan = on
+<% end -%>
 <% if node['postgresql']['version'].to_f >= 9.0 -%>
 #enable_material = on
 <% end -%>
@@ -394,11 +428,18 @@
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
 
+<% if node['postgresql']['version'].to_f < 9.2 -%>
 #silent_mode = off			# Run server silently.
 					# DO NOT USE without syslog or
 					# logging_collector
 					# (change requires restart)
 
+<% end -%>
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+# This is only relevant when logging to eventlog (win32):
+#event_source = 'PostgreSQL'
+
+<% end -%>
 
 # - When to Log -
 
@@ -518,6 +559,9 @@
 
 #track_activities = on
 #track_counts = on
+<% if node['postgresql']['version'].to_f >= 9.2 -%>
+#track_io_timing = off
+<% end -%>
 <% if node['postgresql']['version'].to_f >= 8.4 -%>
 #track_functions = none			# none, pl, all
 #track_activity_query_size = 1024 	# (change requires restart)
@@ -706,4 +750,8 @@
 # CUSTOMIZED OPTIONS
 #------------------------------------------------------------------------------
 
+<% if node['postgresql']['version'].to_f < 9.2 -%>
 #custom_variable_classes = ''		# list of custom variable class names
+<% elsif node['postgresql']['version'].to_f >= 9.2 -%>
+# Add settings for extensions here
+<% end -%>
