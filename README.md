@@ -110,6 +110,22 @@ Will result in the following config lines:
 
 (no line printed for `ident_file` as it is `nil`)
 
+You may set the optional `node['postgresql']['minimize_conf_restarts']`
+attribute to tell the server recipe to attempt a service reload, if
+possible, instead of restart, to apply all `postgresql.conf` changes
+(all added/deleted/modified settings). Warning: the cookbook can
+correctly determine whether it can use reload only if all
+`node.default['postgresql']['config']` attributes were set before the
+`server` recipe is loaded. In particular, pay attention to the run_list
+order of these recipes, if they are being used:
+
+    # Correct order if using node['postgresql']['minimize_conf_restarts']
+    run_list(
+        "recipe[postgresql::config_initdb]",
+        "recipe[postgresql::config_pgtune]",
+        "recipe[postgresql::server]"
+    )
+
 The `pg_hba.conf` file is dynamically generated from the
 `node['postgresql']['pg_hba']` attribute. This attribute must be an
 array of hashes, each hash containing the authorization data. As it is
@@ -140,6 +156,40 @@ attributes don't need to specify this authorization rule:
 
 (By the way, the template uses `peer` instead of `ident` for PostgreSQL-9.1
 and above, which has the same effect.)
+
+Secure TCP/IP Connections with SSL
+-------------
+
+To bootstrap a `recipe[postgresql::server]` installation with
+`node.default['postgresql']['config']['ssl'] = true`, you must also set
+a `node.default['postgresql']['server']['generate_x509_certificate']`
+attribute. That will generate an unencrypted 2048-bit RSA private key
+(`server.key`) and a self-signed X509 certificate (`server.crt`)
+in the `node['postgresql']['dir']` directory. It is impossible for the
+postgresql service to start with `ssl = on` if those files don't exist.
+
+Setting `:generate_x509_certificate => true` will generate a completely
+empty X509 subject, useful for a bootstrap. You could also generate a
+meaningful distinguished name with any/all of these key-value settings:
+
+    :generate_x509_certificate => {
+        :days_to_certify => 3650,
+        :C => "US", 
+        :ST => "New York",
+        :L => "New York",
+        :O => "Your Company, Inc.",
+        :OU => "Your Department",
+        :CN => "*.yourcompanyname.com"
+    }
+        
+Note that a self-signed certificate generated in this way is suitable
+for encrypted connections, which is probably the point of using
+`ssl = on` in `postgresql.conf` and `hostssl` in `pg_hba.conf`.
+However, if your clients need to verify your server's identity, you
+eventually need a certificate signed by a certificate authority (CA).
+You can safely replace the generated self-signed files because
+`recipe[postgresql::server]` won't overwrite the key and certificate
+files if a `server.crt` file already exists.
 
 Recipes
 =======
