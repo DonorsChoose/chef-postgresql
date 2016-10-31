@@ -238,8 +238,14 @@ checkpoint_segments =
   "desktop" => 3
 }.fetch(db_type)
 
-node.default['postgresql']['config']['checkpoint_segments'] = checkpoint_segments
-  
+if node['postgresql']['version'].to_f < 9.5
+  node.default['postgresql']['config']['checkpoint_segments'] = checkpoint_segments
+else
+  # (6) max_wal_size
+  #     Sets the maximum size the transaction log will be.
+  node.default['postgresql']['config']['max_wal_size'] = '1GB'
+end
+
 # (7) checkpoint_completion_target
 #     Time spent flushing dirty buffers during checkpoint, as fraction
 #     of checkpoint interval.
