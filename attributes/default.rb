@@ -208,7 +208,7 @@ default['postgresql']['pgdg']['repo_rpm_url'] = {
   "9.5" => {
     "centos" => {
       "6" => {
-        "x86_64" => "https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-2.noarch.rpm"
+        "x86_64" => "https://download.postgresql.org/pub/repos/yum/9.5/redhat/rhel-6-x86_64/pgdg-centos95-9.5-3.noarch.rpm"
       }
     }
   },
